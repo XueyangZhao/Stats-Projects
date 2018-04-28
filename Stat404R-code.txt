@@ -1,0 +1,60 @@
+# Setup
+dat <- read.csv("finaldata.csv")
+dat$Temp <- factor(dat$Temp)
+dat$Light <- factor(dat$Light)
+dat$Nutrients <- factor(dat$Nutrients)
+dat$Organic <- factor(dat$Organic)
+
+# Interaction plot(Analysis in lab5)
+# Temp VS. Light
+interaction.plot(x.factor = dat$Temp,trace.factor = dat$Light,response = dat$Y,trace.label = "Light",xlab = "Temp",ylab = "Mean of Length")
+# Nutrients vs.Temp  (Nutrients have no effect on length)
+interaction.plot(x.factor = dat$Temp,trace.factor = dat$Nutrients,response = dat$Y,trace.label = "Nutrients",xlab = "Temp",ylab = "Mean of Length")
+# Nutrients VS. Light
+interaction.plot(x.factor = dat$Light,trace.factor = dat$Nutrients,response = dat$Y,trace.label = "Nutrients",xlab = "Light",ylab = "Mean of Length")
+
+# Regression model
+sprouts.lm <- lm(Y~ Temp + Light + Nutrients + Organic + Light * Nutrients, data = dat )
+sprouts.lm2 <- lm(Y~ Temp + Light + Nutrients + Light * Nutrients + Light*Temp + Nutrients * Temp, data = dat )
+summary(sprouts.lm)
+summary(sprouts.lm2)
+# ANOVA
+sprouts.aov <- aov(Y ~ Temp + Light + Nutrients + Organic + Light * Nutrients,data = dat)
+summary(sprouts.aov)
+
+
+plot.design(Y ~ Temp + Light + Nutrients + Organic, data = dat,ylab = "Mean deviation from accurate (%)")
+
+#Boxcox
+library(MASS)
+boxcox(Y~ Temp + Light + Nutrients + Organic + Light * Nutrients , data = dat, lambda = seq(-1,2,len = 3),ylab = "Log likelihood")
+
+# Normal quantile
+sprouts.aov.full <- aov(Y ~ Temp * Light * Nutrients + Organic,data = dat)
+summary(sprouts.aov.full)
+est <- coefficients(sprouts.aov)
+est2<- coefficients(sprouts.aov.full)
+qqnorm(est[-1], main = "",xlab = "Normal quantile", ylab = "Estimated effect")
+# half-normal
+library(faraway)
+halfnorm(est[-1], ylab="Absolute estimated effect", xlim=c(0,2), nlab=4, labs=c("Temp","Light","Nutrients","Organic","Light:Nutrients"))
+halfnorm(est2[-1], ylab="Absolute estimated effect", xlim=c(0,2), nlab=4, labs=c("Temp","Light","Nutrients","Organic","Light:Nutrients"))
+
+# Normal QQ-plot
+qqnorm(sprouts.aov$residuals, xlab = "Quantile of standard normal", ylab = "Ordered residual")
+# Residual plot, the residuals fall in a symmertrical pattern, 
+# which means the assumption that the random errors are normally distributed is checked.
+plot(sprouts.aov$fitted.values, sprouts.aov$residuals)
+
+#contrast: temp
+temp.est <-((1.12+1.13+0.52+0.48)/4) - ((6.87+7+6.54+6.21)/4)
+se <- 2*sqrt(0.005/8)
+t1<- qt(df=1,0.975)
+print(c(temp.est - se*t1,temp.est + temp.se*t1))
+#contrast: Light
+light.est <- ((1.12+1.13+6.87+7)/4)-((0.52+0.48+6.54+6.21)/4)
+print(c(light.est - se*t1,light.est + se*t1))
+#contrast: Nutrients
+e <- ((1.12+0.52+6.87+6.54)/4)-((1.13+0.48+7+6.21)/4)
+e
+print(c(e - se*t1,e + se*t1))
